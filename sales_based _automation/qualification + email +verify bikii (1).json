@@ -1,0 +1,2021 @@
+{
+  "name": "qualification + email +verify bikii",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "leadsFile",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        64
+      ],
+      "id": "5c6f49e2-76f1-4103-94fd-3f80664a3f5f",
+      "name": "Extract from File1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        208
+      ],
+      "id": "404708aa-6e98-4dc1-a040-921806442756",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    leads: items.map(item => item.json)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        64
+      ],
+      "id": "6608a925-5c4b-4dd2-a106-663cdd65f8ab",
+      "name": "lead_extract"
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $json.leads;\nconst icp = $json.icp;\n\nconst normalize = s => s?.toLowerCase().replace(/[^a-z0-9\\s&]/g, '').trim() || '';\nconst splitCSV = s => s?.split(',').map(normalize).filter(Boolean) || [];\nconst parseRange = s => {\n  const match = s?.match(/(\\d+)[^\\d]*(\\d+)/);\n  return match ? { min: +match[1], max: +match[2] } : null;\n};\n\nconst headcountMatch = (icpRangeStr, leadSizeStr) => {\n  if (!leadSizeStr) return false;\n  const icpRange = parseRange(icpRangeStr);\n  const leadRange = parseRange(leadSizeStr.replace('+', '-100000'));\n  if (!icpRange || !leadRange) return false;\n  return leadRange.min <= icpRange.max && leadRange.max >= icpRange.min;\n};\n\nconst industryAliases = {\n  'internet': ['internet', 'media', 'digital'],\n  'retail': ['retail', 'ecommerce'],\n  'telecommunications': ['telecom', 'telecommunications'],\n  'information technology and services': ['it', 'information technology', 'software', 'saas', 'technology'],\n  'real estate': ['real estate', 'property', 'housing']\n};\n\nconst industryMatch = (leadIndustry, icpIndustries) => {\n  const normLead = normalize(leadIndustry);\n  return icpIndustries.some(i => {\n    const aliases = industryAliases[i] || [i];\n    return aliases.some(alias => normLead.includes(alias));\n  });\n};\n\nconst titleAliases = ['vp', 'vice president', 'head of sales', 'director', 'regional director', 'business development'];\n\nconst icpData = {\n  locations: splitCSV(icp.demographicInfo?.location || ''),\n  income: normalize(icp.demographicInfo?.incomeLevel || ''),\n  designations: splitCSV(icp.professionalDetails?.commonDesignations || '').map(normalize),\n  headcount: icp.professionalDetails?.companyHeadcount || '',\n  industries: splitCSV(icp.industryDetails?.verticals || '')\n};\n\nconst results = leads.map(lead => {\n  const email = lead.Email || lead.email || ''; // add this line\n  const title = normalize(lead.Title);\n  const loc = normalize(lead.Location);\n  const industry = normalize(lead['Company Industry']);\n  const size = lead['Company Size'];\n\n  const locMatch = icpData.locations.some(l => loc.includes(normalize(l)));\n  const titleMatch = titleAliases.some(alias => title.includes(alias));\n  const industryMatched = industryMatch(industry, icpData.industries);\n  const headcountMatched = headcountMatch(icpData.headcount, size);\n\n  let score = 0;\n  if (locMatch) score++;\n  if (titleMatch) score++;\n  if (industryMatched) score++;\n  if (headcountMatched) score++;\n\n  const totalCriteria = 4;\n  const matchPercent = score / totalCriteria;\n  const category = matchPercent >= 0.85 ? 'Best Fit' : matchPercent >= 0.6 ? 'Medium Fit' : 'No Fit';\n\n  return {\n    json: {\n      ...lead,\n      email,  // 👈 ensure email is carried forward\n      score,\n      totalCriteria,\n      matchPercent,\n      category,\n      debug: {\n        locMatch,\n        titleMatch,\n        industryMatched,\n        headcountMatched\n      }\n    }\n  };\n});\n\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        208
+      ],
+      "id": "23ab4ec4-0a26-4bd5-94f6-e95b9fbdb2bb",
+      "name": "Categorize Leads"
+    },
+    {
+      "parameters": {
+        "jsCode": "let icpRaw = $json.body.icpJson;\nlet icp;\n\ntry {\n  icp = typeof icpRaw === 'string' ? JSON.parse(icpRaw) : icpRaw;\n} catch (e) {\n  throw new Error(\"Invalid ICP JSON\");\n}\n\nreturn [{ json: { icp } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        272
+      ],
+      "id": "0076a752-07cc-4d7b-8816-5efa8ca7e872",
+      "name": "icp_exct"
+    },
+    {
+      "parameters": {
+        "jsCode": "let leads = [];\nlet icp = {};\n\nfor (const item of items) {\n  if (item.json.leads) leads = item.json.leads;\n  if (item.json.icp) icp = item.json.icp;\n}\n\nreturn [{ json: { leads, icp } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        208
+      ],
+      "id": "677fc83c-63c4-4512-89d5-c038253e8d18",
+      "name": "flatten"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Making connection",
+        "message": "=Hi {{ $json[\"First name\"] || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2256,
+        928
+      ],
+      "id": "b98d7bf8-fd27-4f95-b934-25ce6fd8f91a",
+      "name": "Send a message",
+      "webhookId": "2dd0ae4a-0679-4e34-94cf-2ee1e8ce17c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QJhJsvCqvwpDA8Pg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Thanks for your interest!",
+        "message": "=Hi {{ $json.name || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2272,
+        1440
+      ],
+      "id": "df694027-06a9-420b-b075-2e8f9a322f2f",
+      "name": "Send a message1",
+      "webhookId": "2dd0ae4a-0679-4e34-94cf-2ee1e8ce17c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QJhJsvCqvwpDA8Pg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6bc8ec1c-2dd3-4115-83c6-bd85c5cfef17",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        272
+      ],
+      "id": "614a7813-9b3d-4c49-bcc5-c5b7c863f7c3",
+      "name": "Webhook",
+      "webhookId": "6bc8ec1c-2dd3-4115-83c6-bd85c5cfef17"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const matchPercent = item.json.matchPercent;\n\n  let category = 'No Fit';\n  if (matchPercent >= 0.75) category = 'Best Fit';\n  else if (matchPercent >= 0.5) category = 'Medium Fit';\n\n  item.json.category = category;\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        208
+      ],
+      "id": "c34c9a43-4bff-4057-a2db-fac6c0382152",
+      "name": "qualify %"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      quilify: item.json.category|| item.json.Category|| item.json.Qualified || item.json.qualified|| null ,\n      email: item.json.Email || item.json.email || null\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        720
+      ],
+      "id": "03f2df63-d6a3-4fab-8609-f36606441eec",
+      "name": "email extractor"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(({ json }) => {\n  const sendex = json.sendex;\n  const result = json.result;\n  const reason = json.reason;\n  const  email=  json.email ;\n\n  let verified;\n\n  if (result === \"deliverable\" || sendex === 1) {\n    verified = \"Verified\";\n  } else if (sendex > 0.7 || reason === \"low_deliverability\") {\n    verified = \"Semi-Verified\";\n  } else {\n    verified = \"Risky\";\n  }\n\n  return {\n    json: {\n      email: email ,\n      verified: verified\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        704
+      ],
+      "id": "36fa73ce-bf75-481a-9ae0-3983284f9cdc",
+      "name": "verify node2"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kickbox.com/v2/verify",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "live_fdd3e42bc51bd6b06c371823a1f7ac52dd2f35bb238405ad59f46171b29f5c16"
+            },
+            {
+              "name": "email",
+              "value": "={{$json[\"email\"]}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        704
+      ],
+      "id": "fc97f8ff-fcc6-494f-9468-a7f1556ce537",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1388785081,
+          "mode": "list",
+          "cachedResultName": "lead qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=1388785081"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1296,
+        1152
+      ],
+      "id": "643cdb32-68e8-4785-80dc-ef1e7f4f847c",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        960,
+        1152
+      ],
+      "id": "c2d4fd56-2b25-4d3b-9d54-515f8ebb0fc6",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const firstEmailStatus = $input.first()?.json[\"Email Status\"] ?? null;\nreturn items.map(item => {\n  return {\n    json: {\n      Name: item.json.First_name + item.json.Last_name || item.json.Name|| null ,\n      catagory: item.json.category||item.json.Category||null,\n      verified: item.json.Verified || item.json.verified || item.json.Email_Status,\n      email: item.json.Email || item.json.email || null\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        1152
+      ],
+      "id": "f81e3a6c-7858-4855-8028-99b4c654aa7c",
+      "name": "email+ status extractor1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ee12db46-2ed2-431e-bebe-d4e7252bfd7f",
+              "leftValue": "={{ $json.catagory }}",
+              "rightValue": "Medium Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "933b2366-19a2-4ddb-9be7-45611c488d28",
+              "leftValue": "={{ $json.verified }}",
+              "rightValue": "Verified",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        1104
+      ],
+      "id": "b405433f-040b-4006-9962-2edc6776ecf9",
+      "name": "verified + medium fit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "29db76fd-6f23-4c5b-8e58-8aaa04a3d454",
+              "leftValue": "={{ $json.catagory }}",
+              "rightValue": "Best Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "20a01e3f-6cb2-420b-9447-aa366f4cdcc1",
+              "leftValue": "={{ $json.verified }}",
+              "rightValue": "Verified",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        1264
+      ],
+      "id": "91b20164-6c3a-4172-a92a-3589a7fa12a5",
+      "name": "verified + best fit"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so",
+          "mode": "list",
+          "cachedResultName": "lead mng sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "First name",
+              "displayName": "First name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last name",
+              "displayName": "Last name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Status",
+              "displayName": "Email Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Linkedin",
+              "displayName": "Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company website",
+              "displayName": "Company website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Industry",
+              "displayName": "Company Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Founded",
+              "displayName": "Company Founded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Linkedin",
+              "displayName": "Company Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Headquarters",
+              "displayName": "Company Headquarters",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "totalCriteria",
+              "displayName": "totalCriteria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "matchPercent",
+              "displayName": "matchPercent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "debug",
+              "displayName": "debug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1488,
+        208
+      ],
+      "id": "67ee0dd0-65ca-40cc-a5db-409a6ff95e2d",
+      "name": "Append qualified data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1410774059,
+          "mode": "list",
+          "cachedResultName": "obtained2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=1410774059"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "verified": "={{ $json.verified }}",
+            "Email": "={{ $json.email }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "verified",
+              "displayName": "verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn",
+              "displayName": "LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CompanySize",
+              "displayName": "CompanySize",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CompanyRevenue",
+              "displayName": "CompanyRevenue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Department",
+              "displayName": "Department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Snippet",
+              "displayName": "Snippet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1760,
+        560
+      ],
+      "id": "027f932b-eb71-483b-aeb6-3d667af33d33",
+      "name": "Append verified email",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1580389977,
+          "mode": "list",
+          "cachedResultName": "10test data ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=1580389977"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        208,
+        720
+      ],
+      "id": "c3eabf57-6d9a-49eb-ad81-e84f028cd282",
+      "name": "Get row(s) to verify email",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74b5cd72-0274-4e31-9684-e5653acaacc4",
+              "leftValue": "category",
+              "rightValue": "Best Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "12d8a062-2f27-4f03-bf1f-3feb8232eef6",
+              "leftValue": "category",
+              "rightValue": "Medium Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a20b7845-c04d-4637-8dab-40846bfbe5f0",
+              "leftValue": "Qualified",
+              "rightValue": "Best Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a7e12002-a41e-4d4c-b5b3-8daa7de0ca3f",
+              "leftValue": "Qualified",
+              "rightValue": "Medium Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        720
+      ],
+      "id": "c14e0c54-bc66-4282-b316-5525f17aee4c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "13dceed3-e943-4396-96b8-a13309068a72",
+              "leftValue": "category ",
+              "rightValue": "Best Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d12f2309-c388-42b5-9361-e54997e85d0b",
+              "leftValue": "category",
+              "rightValue": "Medium Fit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        416
+      ],
+      "id": "844f70c7-7790-4232-a25d-6600a6d6f4cc",
+      "name": "If best /medium fit"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "HELLO FROM SALESIFY",
+        "emailType": "html",
+        "message": "=Hi {{ $json[\"First name\"] || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2272,
+        1088
+      ],
+      "id": "700ebad2-3c82-4b9e-a7d5-e91e66ff30e8",
+      "name": "Create a draft",
+      "webhookId": "71a2bc95-b3bc-442d-bab0-0b3f676206b3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QJhJsvCqvwpDA8Pg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "HELLO FROM SALESIFY",
+        "emailType": "html",
+        "message": "=Hi {{ $json[\"First name\"] || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2272,
+        1248
+      ],
+      "id": "db5c1659-b589-458f-b789-d47206a1709d",
+      "name": "Create a draft1",
+      "webhookId": "71a2bc95-b3bc-442d-bab0-0b3f676206b3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QJhJsvCqvwpDA8Pg",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Send a message": [
+      {
+        "json": {
+          "id": "1985484e89e4a0ca",
+          "threadId": "1985484e89e4a0ca",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484ea06aec8b",
+          "threadId": "1985484ea06aec8b",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484ea072bfb4",
+          "threadId": "1985484ea072bfb4",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484edbd96cee",
+          "threadId": "1985484edbd96cee",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484edaa759ab",
+          "threadId": "1985484edaa759ab",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484ef972cf6d",
+          "threadId": "1985484ef972cf6d",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484f1dc7b5c1",
+          "threadId": "1985484f1dc7b5c1",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484f42a8701c",
+          "threadId": "1985484f42a8701c",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484f9cc2896d",
+          "threadId": "1985484f9cc2896d",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484f9efb9f31",
+          "threadId": "1985484f9efb9f31",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484fb78e5d4f",
+          "threadId": "1985484fb78e5d4f",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484fba1d289f",
+          "threadId": "1985484fba1d289f",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484fcd393768",
+          "threadId": "1985484fcd393768",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "1985484ff6374eb4",
+          "threadId": "1985484ff6374eb4",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "198548505ca0783b",
+          "threadId": "198548505ca0783b",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "198548507f027561",
+          "threadId": "198548507f027561",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "198548508c2bff7c",
+          "threadId": "198548508c2bff7c",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "19854850a87c6001",
+          "threadId": "19854850a87c6001",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "19854850c98ddde7",
+          "threadId": "19854850c98ddde7",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "19854850fa014377",
+          "threadId": "19854850fa014377",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "19854850fb577208",
+          "threadId": "19854850fb577208",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "198548511f5eb7a1",
+          "threadId": "198548511f5eb7a1",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      }
+    ],
+    "email+ status extractor1": [
+      {
+        "json": {
+          "Name": "AmitKale",
+          "catagory": "No Fit",
+          "verified": "Invalid",
+          "email": "akale@relianceretail.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "VaibhavPadalkar",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "vaibhav.padalkar@indusind.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "ShwetaRamakrishnan",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "shweta@hotstar.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "PankajChadha",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "pankaj.chadha@vodafoneidea.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "TusharParekh",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "tparekh@issworld.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RajeshMaurya",
+          "catagory": "Best Fit",
+          "verified": "Verified",
+          "email": "rmaurya@fortinet.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "VivekKapadia",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "vivekk@hdfclife.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "MalikaKutub",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "malika@hotstar.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "DixitJasani",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "dixit.jasani@zycus.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "ManishLamba",
+          "catagory": "Best Fit",
+          "verified": "Invalid",
+          "email": "mlamba@midmark.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "VenkatIyer",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "venkat.iyer@maistering.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "MangeshPaithankar",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "mpaithankar@hiranandani.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "JayantaSinha",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "jayanta.sinha@finolexwater.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SaurabhVarma",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "saurabh_varma@jindalpoly.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "HemantManglani",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "hemant@supramind.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SultanAnsari",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "sultan@way2online.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RakeshMishra",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "rmishra@glg.it"
+        }
+      },
+      {
+        "json": {
+          "Name": "VijayAhuja",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "vijay.a@vashielectricals.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SuneelSehgal",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "suneel.sehgal@crmnext.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "Summit SJoshi",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "summit@softenger.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "HiteshLalchandani",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "hitesh.lalchandani@ruparel.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "GunjanGhai ",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "gunjan.ghai@phonepe.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SourabhAgrawal",
+          "catagory": "No Fit",
+          "verified": "Verified",
+          "email": "sourabhagrawal@lupin.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SandeepJain",
+          "catagory": "No Fit",
+          "verified": "Invalid",
+          "email": "sjain@ntt.co.jp"
+        }
+      },
+      {
+        "json": {
+          "Name": "AnantharamanBalakrishnan",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "anantharaman.balakrishnan@nutanix.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "Seethalakshmi VIyer",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "seethalakshmi.iyer@startv.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SudeepNagar",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "snagar@bluestone.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "ANIMESHDAS",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "animesh.das@dynamixgroup.co.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "KrishnanV V",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "krishnan.v@seclore.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "VaibhavDeshpande",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "vaibhav.d@ukrealty.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "AdityaZutshi",
+          "catagory": "No Fit",
+          "verified": "Verified",
+          "email": "adityazutshi@lupin.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "JayaBhatia",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "jaya.bhatia@bcwebwise.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "Devina DhavaleShah",
+          "catagory": "No Fit",
+          "verified": "Invalid",
+          "email": "dshah@99acres.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "VishwanathShetty",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "vishwanath.shetty@pocketaces.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "NitinGupta",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "nitin.gupta@mantraproperties.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "JitendraSingh",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "jsingh@runwal.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AmitSidana",
+          "catagory": "Best Fit",
+          "verified": "Catch All",
+          "email": "amit@pridehotel.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "TejasBhatt",
+          "catagory": "Best Fit",
+          "verified": "Verified",
+          "email": "tejas.bhatt@wellthy.care"
+        }
+      },
+      {
+        "json": {
+          "Name": "GauravKanwal",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "gaurav.kanwal@startv.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RAJEEV AGARWAL ",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "rajeev.agarwal@sqjpl.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "YatinDaga",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "yatindaga@rustomjee.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "GulshanKumar",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "gulshan.kumar@anchor-world.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "GirishNair",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "girish@reliablespaces.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SudhirKunder",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "sudhir@mumbaich.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SyedNaseem",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "syed.naseem@questoffices.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AshishPande",
+          "catagory": "No Fit",
+          "verified": "Invalid",
+          "email": "ashish@vodafone.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "VishalDoshi, MRICS",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "vishal.doshi@rajeshlifespaces.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AshishTrehan",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "ashish.trehan@cignex.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SimranKaur",
+          "catagory": "Best Fit",
+          "verified": "Catch All",
+          "email": "simran.kaur@mahs.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "DheerajMathur",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "dheeraj.mathur@oneassist.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "JogeshNair",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "jogesh.nair@puraniks.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "RakeshKawde",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "rakesh_kawde@weikfield.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AnilKumar",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "anil@blackngreen.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "DhananjayUppoor",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "dhananjay.uppoor@tatasky.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "UditenduBose",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "ubose@schoolguru.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "MOHAMMEDFAISAL",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "mfaisal@squareyards.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SumitMidha",
+          "catagory": "No Fit",
+          "verified": "Invalid",
+          "email": "sumit.midha@asianpaints.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RakeshKumar",
+          "catagory": "Best Fit",
+          "verified": "Catch All",
+          "email": "rakesh@ascentmeditech.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "DharmeshShah",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "dharmesh@puravankara.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "DharmeshZavery",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "dharmesh.zavery@huhtamaki.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SupratimPaul",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "spaul@oberoihotels.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AnupamBhattacharjee",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "anupam.bhattacharjee@lodhagroup.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AshishTelang",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "ashish.telang@retaillight.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "KunalThakkar",
+          "catagory": "Best Fit",
+          "verified": "Invalid",
+          "email": "kunal.thakkar@fabhotels.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RupeshChoudhary",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "rupesh.choudhary@vodafoneidea.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SameerDande",
+          "catagory": "Best Fit",
+          "verified": "Invalid",
+          "email": "sdande@featherlitefurniture.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "PawanBajaj",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "pbajaj@runwal.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "Samrat Sengupta",
+          "catagory": "Medium Fit",
+          "verified": "Verified",
+          "email": "samrat.sengupta@lodhagroup.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "KumarAjit",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "kajit@saregama.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "RathoreKalpesh",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "rathore.kalpesh@petpooja.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AtulMuley",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "atulmuley@goldwinner.net"
+        }
+      },
+      {
+        "json": {
+          "Name": "DushyantVijayvargiya",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "dvijayvargiya@spentacorporation.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "ManojTinna",
+          "catagory": "Medium Fit",
+          "verified": "Invalid",
+          "email": "mtinna@entropiktech.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "SuchitraMalaviya",
+          "catagory": "No Fit",
+          "verified": "Verified",
+          "email": "smalaviya@bit.ly"
+        }
+      },
+      {
+        "json": {
+          "Name": "ChetanShah",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "chetan_shah@techmahindra.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "AmitSalunkhe(Dhas)",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "asalunkhe@cari.org.in"
+        }
+      },
+      {
+        "json": {
+          "Name": "NitinBhandari",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "nbhandari@runwal.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "HarshLambah",
+          "catagory": "Medium Fit",
+          "verified": "Catch All",
+          "email": "harsh.lambah@regus.com"
+        }
+      },
+      {
+        "json": {
+          "Name": "PaliTripathi",
+          "catagory": "No Fit",
+          "verified": "Catch All",
+          "email": "pali.tripathi@ceat.com"
+        }
+      }
+    ],
+    "Send a message1": [
+      {
+        "json": {
+          "id": "19854851210c25ce",
+          "threadId": "19854851210c25ce",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      },
+      {
+        "json": {
+          "id": "19854851433945d8",
+          "threadId": "19854851433945d8",
+          "labelIds": [
+            "SENT"
+          ]
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "lead_extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lead_extract": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Leads": {
+      "main": [
+        [
+          {
+            "node": "qualify %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "icp_exct": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "flatten": {
+      "main": [
+        [
+          {
+            "node": "Categorize Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "icp_exct",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "qualify %": {
+      "main": [
+        [
+          {
+            "node": "Append qualified data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If best /medium fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email extractor": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verify node2": {
+      "main": [
+        [
+          {
+            "node": "Append verified email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "verified + medium fit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "verified + best fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "verify node2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "email+ status extractor1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email+ status extractor1": {
+      "main": [
+        []
+      ]
+    },
+    "verified + medium fit": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verified + best fit": {
+      "main": [
+        [
+          {
+            "node": "Create a draft1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append qualified data": {
+      "main": [
+        []
+      ]
+    },
+    "Append verified email": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s) to verify email": {
+      "main": [
+        [
+          {
+            "node": "email extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        []
+      ]
+    },
+    "If best /medium fit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8d1ad041-108e-4bde-a816-2b2d7d4acf73",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b86a9733646a1aef5e679ef70bae8d8e087c635780d6c18795da2848b45fe9e6"
+  },
+  "id": "J5rkPpt7npVcFuaq",
+  "tags": []
+}

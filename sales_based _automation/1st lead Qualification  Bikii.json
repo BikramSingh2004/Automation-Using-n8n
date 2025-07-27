@@ -1,0 +1,575 @@
+{
+  "name": "1st lead Qualification  Bikii..",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "leadsFile",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -80
+      ],
+      "id": "ebc2e074-771b-43e2-8d7f-2092ac7ea4a9",
+      "name": "Extract from File1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        980,
+        100
+      ],
+      "id": "a88aa535-54da-4c44-998b-c38f74a972e3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    leads: items.map(item => item.json)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        0
+      ],
+      "id": "e7fc8d6d-d1ed-444e-9157-1fa9358b4316",
+      "name": "lead_extract"
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $json.leads;\nconst icp = $json.icp;\n\nconst normalize = s => s?.toLowerCase().replace(/[^a-z0-9\\s&]/g, '').trim() || '';\nconst splitCSV = s => s?.split(',').map(normalize).filter(Boolean) || [];\nconst parseRange = s => {\n  const match = s?.match(/(\\d+)[^\\d]*(\\d+)/);\n  return match ? { min: +match[1], max: +match[2] } : null;\n};\n\nconst headcountMatch = (icpRangeStr, leadSizeStr) => {\n  if (!leadSizeStr) return false;\n  const icpRange = parseRange(icpRangeStr);\n  const leadRange = parseRange(leadSizeStr.replace('+', '-100000'));\n  if (!icpRange || !leadRange) return false;\n  return leadRange.min <= icpRange.max && leadRange.max >= icpRange.min;\n};\n\nconst industryAliases = {\n  'internet': ['internet', 'media', 'digital'],\n  'retail': ['retail', 'ecommerce'],\n  'telecommunications': ['telecom', 'telecommunications'],\n  'information technology and services': ['it', 'information technology', 'software', 'saas', 'technology'],\n  'real estate': ['real estate', 'property', 'housing']\n};\n\nconst industryMatch = (leadIndustry, icpIndustries) => {\n  const normLead = normalize(leadIndustry);\n  return icpIndustries.some(i => {\n    const aliases = industryAliases[i] || [i];\n    return aliases.some(alias => normLead.includes(alias));\n  });\n};\n\nconst titleAliases = ['vp', 'vice president', 'head of sales', 'director', 'regional director', 'business development'];\n\nconst icpData = {\n  locations: splitCSV(icp.demographicInfo?.location || ''),\n  income: normalize(icp.demographicInfo?.incomeLevel || ''),\n  designations: splitCSV(icp.professionalDetails?.commonDesignations || '').map(normalize),\n  headcount: icp.professionalDetails?.companyHeadcount || '',\n  industries: splitCSV(icp.industryDetails?.verticals || '')\n};\n\nconst results = leads.map(lead => {\n  const title = normalize(lead.Title);\n  const loc = normalize(lead.Location);\n  const industry = normalize(lead['Company Industry']);\n  const size = lead['Company Size'];\n\n  const locMatch = icpData.locations.some(l => loc.includes(normalize(l)));\n  const titleMatch = titleAliases.some(alias => title.includes(alias));\n  const industryMatched = industryMatch(industry, icpData.industries);\n  const headcountMatched = headcountMatch(icpData.headcount, size);\n\n  let score = 0;\n  if (locMatch) score++;\n  if (titleMatch) score++;\n  if (industryMatched) score++;\n  if (headcountMatched) score++;\n\n  const totalCriteria = 4;\n  const matchPercent = score / totalCriteria;\n  const category = matchPercent >= 0.85 ? 'Best Fit' : matchPercent >= 0.6 ? 'Medium Fit' : 'No Fit';\n\n  return {\n    json: {\n      ...lead,\n      score,\n      totalCriteria,\n      matchPercent,\n      category,\n      debug: {\n        locMatch,\n        titleMatch,\n        industryMatched,\n        headcountMatched\n      }\n    }\n  };\n});\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        100
+      ],
+      "id": "2b9c726b-b7b0-46a1-b4aa-6488165e4ba0",
+      "name": "Categorize Leads"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so",
+          "mode": "list",
+          "cachedResultName": "lead mng sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iXvzhyeYTiwbM6tQ8SbgMUdOEnqA-jJauj3Kxron2so/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "First name",
+              "displayName": "First name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last name",
+              "displayName": "Last name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Status",
+              "displayName": "Email Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Linkedin",
+              "displayName": "Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company website",
+              "displayName": "Company website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Industry",
+              "displayName": "Company Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Founded",
+              "displayName": "Company Founded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Linkedin",
+              "displayName": "Company Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Headquarters",
+              "displayName": "Company Headquarters",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "totalCriteria",
+              "displayName": "totalCriteria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "matchPercent",
+              "displayName": "matchPercent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "debug",
+              "displayName": "debug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1720,
+        360
+      ],
+      "id": "1fb904b5-d989-4150-b220-6c2ce93b9f8e",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "H9L9dEkdUL7f1y3s",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let icpRaw = $json.body.icpJson;\nlet icp;\n\ntry {\n  icp = typeof icpRaw === 'string' ? JSON.parse(icpRaw) : icpRaw;\n} catch (e) {\n  throw new Error(\"Invalid ICP JSON\");\n}\n\nreturn [{ json: { icp } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        240
+      ],
+      "id": "10569dcd-d3ea-4e48-ac22-206003bdc7e2",
+      "name": "icp_exct"
+    },
+    {
+      "parameters": {
+        "jsCode": "let leads = [];\nlet icp = {};\n\nfor (const item of items) {\n  if (item.json.leads) leads = item.json.leads;\n  if (item.json.icp) icp = item.json.icp;\n}\n\nreturn [{ json: { leads, icp } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "37150273-22a7-48f6-bdb0-865658df9c30",
+      "name": "flatten"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "29db76fd-6f23-4c5b-8e58-8aaa04a3d454",
+              "leftValue": "=$json[\"category\"] && $json[\"category\"].trim().toLowerCase() === \"best fit\"\n",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        220
+      ],
+      "id": "23e5e7e7-5e2f-477b-a02b-ee8532f3e62d",
+      "name": "best fit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ee12db46-2ed2-431e-bebe-d4e7252bfd7f",
+              "leftValue": "=$json[\"category\"] && $json[\"category\"].trim().toLowerCase() === \"medium fit\"\n\n",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1960,
+        -20
+      ],
+      "id": "7036a624-1244-4d70-8fcb-ae51d7d9b922",
+      "name": "medium fit"
+    },
+    {
+      "parameters": {
+        "sendTo": "=lllllllll@gmail.com",
+        "subject": "Thanks for your interest!",
+        "message": "=Hi {{ $json[\"First name\"] || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2260,
+        -40
+      ],
+      "id": "baddfe3c-64a6-4cf8-b882-fd63ecaab12d",
+      "name": "Send a message",
+      "webhookId": "2dd0ae4a-0679-4e34-94cf-2ee1e8ce17c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HhFY27rxGJKBOAGZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "llll818@gmail.com ",
+        "subject": "Thanks for your interest!",
+        "message": "=Hi {{ $json.name || \"there\" }}, <br><br> Thanks for showing interest in our product. One of our team members will reach out shortly. <br><br> Regards,<br> Your Company Name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2300,
+        220
+      ],
+      "id": "7c772a70-3c42-4cba-975f-370a29622692",
+      "name": "Send a message1",
+      "webhookId": "2dd0ae4a-0679-4e34-94cf-2ee1e8ce17c4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HhFY27rxGJKBOAGZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6bc8ec1c-2dd3-4115-83c6-bd85c5cfef17",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        180
+      ],
+      "id": "4c94cb24-0555-4ed1-b270-8e0cfa8847d1",
+      "name": "Webhook",
+      "webhookId": "6bc8ec1c-2dd3-4115-83c6-bd85c5cfef17"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const matchPercent = item.json.matchPercent;\n\n  let category = 'No Fit';\n  if (matchPercent >= 0.75) category = 'Best Fit';\n  else if (matchPercent >= 0.5) category = 'Medium Fit';\n\n  item.json.category = category;\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        60
+      ],
+      "id": "64b5f3ed-ff97-4c66-9a48-49b44e3bd8e6",
+      "name": "qualify %"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "lead_extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lead_extract": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Leads": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "qualify %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "icp_exct": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "flatten": {
+      "main": [
+        [
+          {
+            "node": "Categorize Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "best fit": {
+      "main": [
+        []
+      ]
+    },
+    "medium fit": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "icp_exct",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "qualify %": {
+      "main": [
+        [
+          {
+            "node": "medium fit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "best fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d3c5f63d-fe4c-4083-8516-34189d080b50",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "928b9b9295c941235c6233cc830005a66e71fa536da940b815b7e2d002ca8cf2"
+  },
+  "id": "Tqfzicn8dlSJERAv",
+  "tags": []
+}

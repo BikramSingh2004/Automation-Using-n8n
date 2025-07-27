@@ -1,0 +1,479 @@
+{
+  "name": "5 CRM connection bikii",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -32
+      ],
+      "id": "e3e915dc-051f-46cc-9dbb-bfdcf1204c92",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -304,
+        -32
+      ],
+      "id": "0325e10d-b20c-4584-ac0a-632eb0f90334",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 10368609,
+          "mode": "list",
+          "cachedResultName": "crm",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=10368609"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        768,
+        -32
+      ],
+      "id": "d0d416f5-86da-4675-ac41-2c85dd9b30fa",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "company",
+        "operation": "update",
+        "companyId": {
+          "__rl": true,
+          "value": 126661041863,
+          "mode": "list",
+          "cachedResultName": "HubSpot"
+        },
+        "updateFields": {
+          "city": "={{ $json.companyHQ }}",
+          "companyDomainName": "={{ $json.companyIndustry }}",
+          "linkedinBio": "={{ $json.companyLinkedin }}",
+          "name": "={{ $json.company }}",
+          "numberOfEmployees": "={{ $json.companySize }}",
+          "stateRegion": "={{ $json.companyHQ }}",
+          "streetAddress": "={{ $json.location }}",
+          "yearFounded": "={{ $json.companyFounded }}"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        176
+      ],
+      "id": "9cbcefbb-a83a-4a92-8939-64200f84fb80",
+      "name": "Update a company",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "2mWhR9FrgyERzzjH",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $json.email }}",
+        "additionalFields": {
+          "city": "={{ $json.companyHQ }}",
+          "companyName": "={{ $json.company }}",
+          "companySize": "={{ $json.companySize }}",
+          "firstName": "={{ $json.firstName }}",
+          "industry": "={{ $json.companyIndustry }}",
+          "jobTitle": "={{ $json.title }}",
+          "lastName": "={{ $json.lastName }}",
+          "stateRegion": "={{ $json.companyHQ }}",
+          "websiteUrl": "={{ $json.companyWebsite }}",
+          "workEmail": "={{ $json.email }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "6ef35cc7-339a-4df4-b610-ce01cc98c275",
+      "name": "Create or update a contact",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "2mWhR9FrgyERzzjH",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n\n  output.push({\n    json: {\n      firstName: data[\"First name\"]?.trim() || \"\",\n      lastName: data[\"Last name\"]?.trim() || \"\",\n      email: data[\"Email\"]?.toLowerCase().trim() || \"\",\n      emailStatus: data[\"Email Status\"] || \"\",\n      title: data[\"Title\"] || \"\",\n      location: data[\"Location\"] || \"\",\n      linkedin: data[\"Linkedin\"]?.trim() || \"\",\n      company: data[\"Company\"] || \"\",\n      companyWebsite: data[\"Company website\"] || \"\",\n      companyIndustry: data[\"Company Industry\"] || \"\",\n      companyFounded: data[\"Company Founded\"] || \"\",\n      companySize: data[\"Company Size\"] || \"\",\n      companyLinkedin: data[\"Company Linkedin\"]?.trim() || \"\",\n      companyHQ: data[\"Company Headquarters\"] || \"\"\n    }\n  });\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        -32
+      ],
+      "id": "a02e26f3-e331-4f11-bf9f-870847384a45",
+      "name": "info extracter"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      hubspot_status: item.json.id ? \"✅ Success\" : \"❌ Failed\"\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -32
+      ],
+      "id": "618ae6ce-d6b2-4d99-b7e3-6e6e7521bb2f",
+      "name": "status"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 10368609,
+          "mode": "list",
+          "cachedResultName": "crm",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=10368609"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        992,
+        368
+      ],
+      "id": "ac365d14-aecb-4a4a-8761-43e7956fec64",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $json.email }}",
+        "additionalFields": {
+          "city": "={{ $json.companyHQ }}",
+          "companyName": "={{ $json.company }}",
+          "companySize": "={{ $json.companySize }}",
+          "firstName": "={{ $json.firstName }}",
+          "industry": "={{ $json.companyIndustry }}",
+          "jobTitle": "={{ $json.title }}",
+          "lastName": "={{ $json.lastName }}",
+          "stateRegion": "={{ $json.companyHQ }}",
+          "websiteUrl": "={{ $json.companyWebsite }}",
+          "workEmail": "={{ $json.email }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        368
+      ],
+      "id": "da8bfadd-52f7-4822-8dec-a44d1c2dab61",
+      "name": "Create or update a contact1",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "2mWhR9FrgyERzzjH",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n\n  output.push({\n    json: {\n      firstName: data[\"First name\"]?.trim() || \"\",\n      lastName: data[\"Last name\"]?.trim() || \"\",\n      email: data[\"Email\"]?.toLowerCase().trim() || \"\",\n      emailStatus: data[\"Email Status\"] || \"\",\n      title: data[\"Title\"] || \"\",\n      location: data[\"Location\"] || \"\",\n      linkedin: data[\"Linkedin\"]?.trim() || \"\",\n      company: data[\"Company\"] || \"\",\n      companyWebsite: data[\"Company website\"] || \"\",\n      companyIndustry: data[\"Company Industry\"] || \"\",\n      companyFounded: data[\"Company Founded\"] || \"\",\n      companySize: data[\"Company Size\"] || \"\",\n      companyLinkedin: data[\"Company Linkedin\"]?.trim() || \"\",\n      companyHQ: data[\"Company Headquarters\"] || \"\"\n    }\n  });\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        368
+      ],
+      "id": "ec278b39-dc43-45ce-a713-d399da27e0d1",
+      "name": "info extracter1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      hubspot_status: item.json.id ? \"✅ Success\" : \"❌ Failed\"\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        368
+      ],
+      "id": "9a62fb4a-c059-41e2-9924-cae5045dd7d2",
+      "name": "status1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0f47b1da-32e4-4e79-b431-491a0ea7d4ad",
+        "options": {
+          "binaryPropertyName": "data",
+          "rawBody": true,
+          "responseData": ""
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        368
+      ],
+      "id": "41013fbe-0feb-4c7e-9f67-2b3349bf24ec",
+      "name": "Webhook",
+      "webhookId": "0f47b1da-32e4-4e79-b431-491a0ea7d4ad"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        368
+      ],
+      "id": "dcbbc4fd-71a7-487d-b31b-3366bc220f26",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "info extracter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a company": {
+      "main": [
+        []
+      ]
+    },
+    "Create or update a contact": {
+      "main": [
+        [
+          {
+            "node": "status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "info extracter": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a contact1": {
+      "main": [
+        [
+          {
+            "node": "status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "info extracter1": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "info extracter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ce5e6ce6-f8b9-42d4-8773-c9ff56db9bcd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b86a9733646a1aef5e679ef70bae8d8e087c635780d6c18795da2848b45fe9e6"
+  },
+  "id": "y4nWiFXuBxcxIuuE",
+  "tags": []
+}

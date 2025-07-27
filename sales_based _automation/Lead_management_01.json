@@ -1,0 +1,403 @@
+{
+  "name": "Lead_management_01",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "mergeByIndex",
+        "join": "outer"
+      },
+      "name": "Merge ICP + Leads",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        940,
+        40
+      ],
+      "id": "b1e83e33-0a7e-4e86-98f5-850e344c6918",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "leadsFile",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        20
+      ],
+      "id": "29f0ba52-c84a-49d3-ae86-2f54b3f5178f",
+      "name": "Extract from File",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        140
+      ],
+      "id": "12f930e2-7e04-4432-9dcb-2ea03de8f822",
+      "name": "No Operation, do nothing1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1DjxmPHerohkD8rpqPABAGETCWgx3WGZkl3lJlBWURwE/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DjxmPHerohkD8rpqPABAGETCWgx3WGZkl3lJlBWURwE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "First name",
+              "displayName": "First name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last name",
+              "displayName": "Last name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email Status",
+              "displayName": "Email Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin",
+              "displayName": "Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company website",
+              "displayName": "Company website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Industry",
+              "displayName": "Company Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Founded",
+              "displayName": "Company Founded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Linkedin",
+              "displayName": "Company Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Headquarters",
+              "displayName": "Company Headquarters",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1720,
+        280
+      ],
+      "id": "b66dd9c6-22c3-4aa9-b11a-982dee8fff04",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aSwt1tnDqn2LpKXh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = items[0].json;\n\nconst leadsInput = input.leads;\nconst icpInput = input.icp || input;\n\nif (!leadsInput || !Array.isArray(leadsInput) || leadsInput.length === 0) {\n  throw new Error(\"Leads input is missing or not a valid non-empty array.\");\n}\n\nfunction preprocess(str) {\n  return str?.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9\\s]/g, '').trim() || '';\n}\n\nfunction extractRange(str) {\n  if (!str || typeof str !== 'string') return null;\n  const cleaned = str.replace(/,/g, '');\n  const match = cleaned.match(/(\\d{2,})\\s*[-–]\\s*(\\d{2,})/); // e.g. 200–5000\n  if (match) {\n    return { min: parseInt(match[1]), max: parseInt(match[2]) };\n  } else if (cleaned.includes('10000') || cleaned.includes('10001')) {\n    return { min: 10000, max: 99999 };\n  }\n  return null;\n}\n\nfunction normalizeTitle(title) {\n  const toRemove = ['assistant', 'associate', 'senior', 'lead', 'national', 'regional'];\n  let cleaned = preprocess(title);\n  toRemove.forEach(word => {\n    cleaned = cleaned.replace(new RegExp(`\\\\b${word}\\\\b`, 'g'), '');\n  });\n  return cleaned.trim();\n}\n\n// === Parse ICP ===\nconst icp = {\n  industries: icpInput.industryDetails?.verticals?.split(',').map(preprocess) || [],\n  locations: icpInput.demographicInfo?.location?.split(',').map(preprocess) || [],\n  designations: icpInput.professionalDetails?.commonDesignations?.split(',').map(normalizeTitle) || [],\n  headcountRange: extractRange(icpInput.professionalDetails?.companyHeadcount || ''),\n  revenue: preprocess(icpInput.industryDetails?.companyRevenues || ''),\n  income: preprocess(icpInput.demographicInfo?.incomeLevel || ''),\n  department: preprocess(icpInput.professionalDetails?.department || '')\n};\n\nfunction parseHeadcount(str) {\n  if (!str || typeof str !== 'string') return null;\n  const cleaned = str.replace(/,/g, '');\n  const match = cleaned.match(/(\\d{2,})\\s*[-–]\\s*(\\d{2,})/);\n  if (match) {\n    return { min: parseInt(match[1]), max: parseInt(match[2]) };\n  } else if (cleaned.includes('10000') || cleaned.includes('10001')) {\n    return { min: 10000, max: 99999 };\n  }\n  return null;\n}\n\nfunction headcountMatch(icpRange, leadStr) {\n  const leadRange = parseHeadcount(leadStr);\n  if (!icpRange || !leadRange) return false;\n  return (\n    (leadRange.min >= icpRange.min && leadRange.min <= icpRange.max) ||\n    (leadRange.max >= icpRange.min && leadRange.max <= icpRange.max)\n  );\n}\n\nfunction matchScore(lead, icp) {\n  let score = 0;\n  const reasons = [];\n\n  const leadLocation = preprocess(lead[\"Location\"]);\n  const leadTitle = normalizeTitle(lead[\"Job Title\"]);\n  const leadIndustry = preprocess(lead[\"Industry\"]);\n  const leadHeadcount = lead[\"Company Headcount\"];\n  const leadRevenue = preprocess(lead[\"Company Revenue\"]);\n  const leadDepartment = preprocess(lead[\"Department\"]);\n  const leadIncome = preprocess(lead[\"Income\"]);\n\n  if (icp.locations.some(loc => leadLocation.includes(loc))) {\n    score++;\n    reasons.push(\"Matched Location\");\n  }\n\n  if (icp.designations.some(des => leadTitle.includes(des))) {\n    score++;\n    reasons.push(\"Matched Designation\");\n  }\n\n  if (icp.industries.some(ind => leadIndustry.includes(ind))) {\n    score++;\n    reasons.push(\"Matched Industry\");\n  }\n\n  if (headcountMatch(icp.headcountRange, leadHeadcount)) {\n    score++;\n    reasons.push(\"Matched Headcount Range\");\n  }\n\n  if (icp.revenue && leadRevenue.includes(icp.revenue)) {\n    score++;\n    reasons.push(\"Matched Revenue\");\n  }\n\n  if (icp.department && leadDepartment.includes(icp.department)) {\n    score++;\n    reasons.push(\"Matched Department\");\n  }\n\n  if (icp.income && leadIncome.includes(icp.income)) {\n    score++;\n    reasons.push(\"Matched Income\");\n  }\n\n  return { score, reasons };\n}\n\n// === Categorization\nconst bestFit = [], mediumFit = [], noFit = [];\n\nfor (const lead of leadsInput) {\n  const { score, reasons } = matchScore(lead, icp);\n\n  const enrichedLead = {\n    ...lead,\n    score,\n    category: score >= 5 ? 'Best Fit' : score >= 3 ? 'Medium Fit' : 'No Fit',\n    matchReasons: reasons.join(', ')\n  };\n\n  if (score >= 5) bestFit.push({ json: enrichedLead });\n  else if (score >= 3) mediumFit.push({ json: enrichedLead });\n  else noFit.push({ json: enrichedLead });\n}\n\n// === Output\nreturn [...bestFit, ...mediumFit, ...noFit];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        200
+      ],
+      "id": "94dc9f3f-ebf6-423b-b060-3fe5010772b1",
+      "name": "Categorize Leads1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    leads: items.map(item => item.json)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        60
+      ],
+      "id": "c683efd0-6c24-499a-ae48-3d12471dd491",
+      "name": "Leads_extractor",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const icpRaw = $json.body.icpJson; // string from text field\nlet icp;\n\ntry {\n  icp = JSON.parse(icpRaw);\n} catch (e) {\n  throw new Error(\"Failed to parse icpJson: \" + e.message);\n}\n\nreturn [{ json: { icp } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        240
+      ],
+      "id": "e12bbded-5403-474e-8178-6ce0228f03d2",
+      "name": "ICP_extractor"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "165b4219-c0b8-4563-adaf-2882c0073069",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        160
+      ],
+      "id": "9a0fc92c-b6e4-42a2-881d-4d2e1ce057b5",
+      "name": "Webhook",
+      "webhookId": "165b4219-c0b8-4563-adaf-2882c0073069"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Merge ICP + Leads": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Leads_extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing1": {
+      "main": [
+        [
+          {
+            "node": "Categorize Leads1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Leads1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads_extractor": {
+      "main": [
+        [
+          {
+            "node": "Merge ICP + Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ICP_extractor": {
+      "main": [
+        [
+          {
+            "node": "Merge ICP + Leads",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ICP_extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ba91acbe-c5bb-4a17-938f-e73c309ade9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fb630564fa1c6b3fb113e5f89a0313a234ded45369172518fabb2e05b79a5e10"
+  },
+  "id": "419puOy9jHqmut5k",
+  "tags": []
+}

@@ -1,0 +1,320 @@
+{
+  "name": "whatsapp bikii",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        16
+      ],
+      "id": "9d5a0e4b-6015-4b3c-a577-1d1b40306b4b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 447920552,
+          "mode": "list",
+          "cachedResultName": "whatsapp in qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=447920552"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "b86811a6-de10-4922-b404-69f7165f4ba4",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY",
+          "mode": "list",
+          "cachedResultName": "first data given",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 447920552,
+          "mode": "list",
+          "cachedResultName": "whatsapp in qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RDwVLZT4fSlI6bCyyDrHdKfB2xpflADxrXqoLJn0YnY/edit#gid=447920552"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone no": "{{phone_no}",
+            "connected_status": "{{status}}"
+          },
+          "matchingColumns": [
+            "phone no"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "phone no",
+              "displayName": "phone no",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "connected_status",
+              "displayName": "connected_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        608,
+        240
+      ],
+      "id": "514b2ffc-9e9a-44fe-aec4-2c985bee0f15",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IbENg7mMc6lQMuyU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      to: \"+91 9324241839\",\n      customer_name: \"Anish\"\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        16
+      ],
+      "id": "0528ded6-1f05-4c1c-b8f5-9251c248898c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v19.0/730094489628189/phone_numbers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "EAAIo4WTm7PMBPFRsXStXRvkZBjHuw6VPoGJB6J1ZAmi5GHy5QU8QbGRi1EU7NrQilP7ZBjs8WyFbgBO7UGp7SnjclUzEig1IPk1i9xZCwZCnQ4ZBPAPZAIcy016ZBW5ZCYTdNuQuFZBTbIrvy9ZCzzXGSeoAZBNcovMLCYPnGZCpoyETpJlwf55PYNDzXigdvNehupv5YOdb2wTO2r5CLAWZCCeB8yXboR6RrLJiICgBcXmJgorEwZ"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        352
+      ],
+      "id": "b9ccaf7e-8136-4ee9-9fee-51a30bb230c7",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const originalTo = item.json.to || 'unknown';\n\n  if (item.json.messages && item.json.messages[0]) {\n    // Success\n    return {\n      json: {\n        status: 'sent',\n        to: originalTo,\n        messageId: item.json.messages[0].id,\n      }\n    };\n  } else if (item.json.error) {\n    // Failure\n    return {\n      json: {\n        status: 'failed',\n        to: originalTo,\n        error: item.json.error.message || 'Unknown error',\n      }\n    };\n  } else {\n    // Unexpected\n    return {\n      json: {\n        status: 'unknown',\n        to: originalTo,\n        raw: item.json,\n      }\n    };\n  }\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        240
+      ],
+      "id": "977459ed-40e3-46d2-84c9-a53db4bbe409",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/<PHONE_NUMBER_ID>/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "EAAIo4WTm7PMBPFRsXStXRvkZBjHuw6VPoGJB6J1ZAmi5GHy5QU8QbGRi1EU7NrQilP7ZBjs8WyFbgBO7UGp7SnjclUzEig1IPk1i9xZCwZCnQ4ZBPAPZAIcy016ZBW5ZCYTdNuQuFZBTbIrvy9ZCzzXGSeoAZBNcovMLCYPnGZCpoyETpJlwf55PYNDzXigdvNehupv5YOdb2wTO2r5CLAWZCCeB8yXboR6RrLJiICgBcXmJgorEwZD"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"whatsapp:+91{{ $json.to }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"hello_world\",\n    \"language\": {\n      \"code\": \"en_US\"\n    },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json.Name }}\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        352
+      ],
+      "id": "96468832-0262-47f9-a840-d36e8c6172ab",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "747871795069277",
+        "recipientPhoneNumber": "={{ $json.to }}",
+        "textBody": "=hello this msg is from Salesify {{$json.customer_name}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        368,
+        16
+      ],
+      "id": "22bb39ba-1b09-4d95-9251-a12da43fa437",
+      "name": "Send message",
+      "webhookId": "cebe1816-05fd-409c-88a2-d4c4bfc27138",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "E8OAcPdcAxP4D2xe",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        []
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "485242ba-77ad-42e4-bc03-8281b9585690",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b86a9733646a1aef5e679ef70bae8d8e087c635780d6c18795da2848b45fe9e6"
+  },
+  "id": "5yTKiJADfP0VeSfu",
+  "tags": []
+}

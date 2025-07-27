@@ -1,0 +1,352 @@
+{
+  "name": "WhatsApp Meeting Booking",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "747871795069277",
+        "recipientPhoneNumber": "+91  7338461200",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        976,
+        0
+      ],
+      "id": "0d202e9d-d333-4b81-b6f4-278347619725",
+      "name": "Send message",
+      "webhookId": "55fd60a3-c144-41ed-87ef-a39bfb4044e7",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YNKr17ii5gNwzjVx",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        224
+      ],
+      "id": "b67164e0-8c4a-4065-8b02-1facc29c2941",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "w9xzlgy2hic5Laml",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "haricr237@gmail.com",
+          "mode": "list",
+          "cachedResultName": "haricr237@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {
+          "timeZone": {
+            "__rl": true,
+            "value": "Asia/Kolkata",
+            "mode": "list",
+            "cachedResultName": "Asia/Kolkata"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        224
+      ],
+      "id": "c7b9fe7d-2b28-4710-bf62-c11c04726730",
+      "name": "Get Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "bqjndAfI2mYJUKeQ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "haricr237@gmail.com",
+          "mode": "list",
+          "cachedResultName": "haricr237@gmail.com"
+        },
+        "start": "={{ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $fromAI('attendees0_Attendees', ``, 'string') }}"
+          ],
+          "guestsCanInviteOthers": "={{ $fromAI('Guests_Can_Invite_Others', ``, 'boolean') }}",
+          "guestsCanModify": "={{ $fromAI('Guests_Can_Modify', ``, 'boolean') }}",
+          "maxAttendees": "={{ $fromAI('Max_Attendees', ``, 'number') }}",
+          "sendUpdates": "all",
+          "summary": "={{ $fromAI('Summary', ``, 'string') }}",
+          "visibility": "public"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        224
+      ],
+      "id": "93e01ad8-b0f9-4c19-9800-0fe1cbaf8752",
+      "name": "Create Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "bqjndAfI2mYJUKeQ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "haricr237@gmail.com",
+          "mode": "list",
+          "cachedResultName": "haricr237@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        640,
+        224
+      ],
+      "id": "d78bfb9d-bdee-4ef8-86db-44223eec9f66",
+      "name": "Delete Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "bqjndAfI2mYJUKeQ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "haricr237@gmail.com",
+          "mode": "list",
+          "cachedResultName": "haricr237@gmail.com"
+        },
+        "eventId": "={{ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {
+          "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+          "guestsCanInviteOthers": true,
+          "guestsCanModify": true,
+          "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        224
+      ],
+      "id": "bcc70f0a-195d-4474-b419-290dcc7853d8",
+      "name": "Update Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "bqjndAfI2mYJUKeQ",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messages[0].text.body }}",
+        "options": {
+          "systemMessage": "= # Overview\nYou are an AI powered WhatsApp Assistant for my WhatsApp Account. First greet the messenger get the context of the messenger and respond accordingly.\n\n#Responsibility\nif a messenger is sends a message regarding booking a meeting. Your responsibilities include creating, getting, and deleting events in the user's calendar. You handle any other thing apart from mentioned.\n\n## Calendar Management Tools:\n-Use \"Create Event\" for solo events. Use \"Get Events\" to fetch calendar schedules when requested.\n-Use \"Delete Event\" to delete an event. You must use \"Get Events\" first to get the ID of the event to delete.\n-Use \"Update Event\" to update an event. You must use \"Get Events\" first to get the ID of the event to update.\n\n##Purpose of the meeting\nAsk for the purpose of the meeting  \n- Example: “What is the purpose or title of the meeting?”\nAdd answer in the (Summary) field\n\n##Required Field \n-Ask for thier Email ID to book a meeting\nExample:\n“Can you please share your email ID? you can also invite anyone to this meeting if you want. When You enter multiple emails separated by commas.”\n\nAdd those emails to the field (Attendees).\n\n## Rules\n- Turn the incoming query into an action. Ignore clarification questions, just take action based on the intent you receive.\n- Also send the Event link with output.\n- don't mention about calendar until the messenger request to book a meeting.\n## Final Notes\n-Here is the current date/time: {{ $now }}\n-If a duration for an event isn't specified, assume it will be 30 minutes.\n-When responding with Start and End time, always use full ISO format with India timezone offset (IST = +05:30). For example:\n\n{\n  \"Start\": \"2025-07-25T19:00:00+05:30\",\n  \"End\": \"2025-07-25T20:00:00+05:30\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        352,
+        0
+      ],
+      "id": "c5d47289-6057-428a-b9a3-dc5dbe4b9b88",
+      "name": "AI Agent",
+      "notesInFlow": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=1",
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        224
+      ],
+      "id": "3f888c58-690f-4a85-b9d1-750db4e0f4c6",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "50164ba5-f7e9-45d3-a554-a0facf8005ed",
+      "name": "WhatsApp Trigger",
+      "webhookId": "e9894eb3-aa94-49d3-adef-d1828e9cbbe4",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "JmXUIVB9rfHqRa6N",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "c85cf695-1edc-4d0d-ac15-fd6df69fbfb5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d7d4d42e076e43093df2d5154e53868b994bae5cc2e21bf4864fa8e24717d64"
+  },
+  "id": "92eFb6Hc0p6jDqYc",
+  "tags": []
+}

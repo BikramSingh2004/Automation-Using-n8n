@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "filePath": "/files/linkedin_urls.csv"
+      },
+      "id": "ReadBinaryFile",
+      "name": "Read File",
+      "type": "n8n-nodes-base.readBinaryFile"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "CSVtoJSON",
+      "name": "Extract CSV Data",
+      "type": "n8n-nodes-base.csvToJson"
+    },
+    {
+      "parameters": {
+        "batchSize": 1
+      },
+      "id": "SplitInBatches",
+      "name": "Split Rows",
+      "type": "n8n-nodes-base.splitInBatches"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "Wait30s",
+      "name": "Wait 30s",
+      "type": "n8n-nodes-base.wait"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "requestMethod": "POST",
+        "url": "https://apiXXX.unipile.com:XXX/api/v1/linkedin/connect",
+        "headers": {
+          "X-API-KEY": "YOUR_API_KEY",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "options": {},
+        "bodyParametersJson": true,
+        "bodyContent": "={\n  \"account_id\": \"YOUR_LINKEDIN_ACCOUNT_ID\",\n  \"linkedin_url\": \"{{$json[\"linkedin_url\"]}}\"\n}"
+      },
+      "id": "SendConnectRequest",
+      "name": "Send LinkedIn Request",
+      "type": "n8n-nodes-base.httpRequest"
+    },
+    {
+      "parameters": {
+        "mode": "add",
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "={{$json.success ? 'Success' : 'Failed'}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetStatus",
+      "name": "Set Status",
+      "type": "n8n-nodes-base.set"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "write",
+        "fileName": "/files/linkedin_status_output.csv",
+        "dataPropertyName": "binaryData"
+      },
+      "id": "WriteCSV",
+      "name": "Write CSV",
+      "type": "n8n-nodes-base.writeBinaryFile"
+    }
+  ],
+  "connections": {
+    "Read File": {
+      "main": [
+        [
+          {
+            "node": "Extract CSV Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CSV Data": {
+      "main": [
+        [
+          {
+            "node": "Split Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Rows": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "Send LinkedIn Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send LinkedIn Request": {
+      "main": [
+        [
+          {
+            "node": "Set Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Status": {
+      "main": [
+        [
+          {
+            "node": "Write CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

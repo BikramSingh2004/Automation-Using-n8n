@@ -1,0 +1,138 @@
+{
+  "name": "propoosal generation bikii..",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e8dfdea0-ef9f-438f-afc1-a6d48d808442",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -48
+      ],
+      "id": "4157f320-814f-46c4-873f-33af3c75a117",
+      "name": "Webhook",
+      "webhookId": "e8dfdea0-ef9f-438f-afc1-a6d48d808442"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "7f0144ed-65ec-4f4c-ba47-6817adb9968f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "messages": {
+          "values": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -64
+      ],
+      "id": "9abce8a9-acd5-4ddd-8255-0ba2385db45f",
+      "name": "Message a model"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -64
+      ],
+      "id": "f0cb4e34-7e44-48be-ac5e-f0704713251f",
+      "name": "Create a document"
+    },
+    {
+      "parameters": {
+        "jsCode": "const salesTemplates = [\n  \"Proposal 1: Basic sales pitch with pricing...\",\n  \"Proposal 2: Tailored for SaaS clients...\",\n  ...\n];\n\nconst consultingTemplates = [...];\n\nreturn [\n  {\n    json: {\n      examples: templateType === 'Sales' ? salesTemplates : consultingTemplates\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        160
+      ],
+      "id": "4532abdf-d356-4e14-9ed9-3d68497b4798",
+      "name": "templates"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "templates": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5aebfbfe-7888-4136-895b-44147cf84cb7",
+  "meta": {
+    "instanceId": "b86a9733646a1aef5e679ef70bae8d8e087c635780d6c18795da2848b45fe9e6"
+  },
+  "id": "OSDhNqpqFvdhj4HK",
+  "tags": []
+}
